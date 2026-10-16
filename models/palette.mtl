@@ -1,0 +1,216 @@
+newmtl wood
+Ka 0.15 0.15 0.15
+Kd 0.35 0.19 0.12
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl wood_light
+Ka 0.15 0.15 0.15
+Kd 0.56 0.34 0.21
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl wood_dark
+Ka 0.15 0.15 0.15
+Kd 0.2 0.11 0.1
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl stone
+Ka 0.15 0.15 0.15
+Kd 0.36 0.34 0.42
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl floor
+Ka 0.15 0.15 0.15
+Kd 0.4 0.3 0.3
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl wall
+Ka 0.15 0.15 0.15
+Kd 0.44 0.4 0.53
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl trim
+Ka 0.15 0.15 0.15
+Kd 0.24 0.19 0.3
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl blanket
+Ka 0.15 0.15 0.15
+Kd 0.35 0.26 0.56
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl pillow
+Ka 0.15 0.15 0.15
+Kd 0.76 0.7 0.64
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl sheet
+Ka 0.15 0.15 0.15
+Kd 0.59 0.52 0.65
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl gold
+Ka 0.15 0.15 0.15
+Kd 0.72 0.56 0.25
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl iron
+Ka 0.15 0.15 0.15
+Kd 0.18 0.2 0.26
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl potion_green
+Ka 0.15 0.15 0.15
+Kd 0.29 0.66 0.49
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl potion_purple
+Ka 0.15 0.15 0.15
+Kd 0.62 0.38 0.78
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl glass
+Ka 0.15 0.15 0.15
+Kd 0.38 0.67 0.7
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl paper
+Ka 0.15 0.15 0.15
+Kd 0.82 0.72 0.52
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl red
+Ka 0.15 0.15 0.15
+Kd 0.68 0.29 0.34
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl blue
+Ka 0.15 0.15 0.15
+Kd 0.29 0.4 0.68
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl green
+Ka 0.15 0.15 0.15
+Kd 0.31 0.51 0.37
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl crystal
+Ka 0.15 0.15 0.15
+Kd 0.42 0.78 0.85
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl straw
+Ka 0.15 0.15 0.15
+Kd 0.7 0.55 0.29
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl rug
+Ka 0.15 0.15 0.15
+Kd 0.51 0.29 0.44
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl soil
+Ka 0.15 0.15 0.15
+Kd 0.23 0.17 0.15
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl leaf
+Ka 0.15 0.15 0.15
+Kd 0.25 0.49 0.3
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl cauldron
+Ka 0.15 0.15 0.15
+Kd 0.17 0.19 0.23
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl wax
+Ka 0.15 0.15 0.15
+Kd 0.92 0.78 0.49
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
+newmtl flame
+Ka 0.15 0.15 0.15
+Kd 0.98 0.64 0.2
+Ks 0.04 0.04 0.04
+Ns 8
+d 1.0
+illum 2
+
