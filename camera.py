@@ -7,7 +7,7 @@ class Camera:
     def __init__(self):
 
         # Posição inicial da câmera
-        self.position = glm.vec3(0.0, 1.6, 2.0)
+        self.position = glm.vec3(0.0, 1.6, 2.5)
 
         # Direção inicial
         self.front = glm.vec3(0.0, 0.0, -1.0)

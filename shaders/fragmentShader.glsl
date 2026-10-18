@@ -1,7 +1,5 @@
-
 #version 460
 
-// Cor recebida do Vertex Shader
 in vec3 vertexColor;
 
 out vec4 fragColor;

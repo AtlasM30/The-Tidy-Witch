@@ -13,7 +13,7 @@ from model import Model
 # Variáveis globais
 shaderId = None
 camera = None
-livro = None
+models = []
 
 # Matriz de projeção
 projection = None
@@ -34,7 +34,7 @@ mouseCaptured = True
 # Configurações iniciais
 def init():
 
-    global shaderId, camera, livro, projection
+    global shaderId, camera, models, projection
     global modelLoc, viewLoc, projectionLoc
 
     # Configurações OpenGL
@@ -83,19 +83,47 @@ def init():
     projectionLoc = glGetUniformLocation(
         shaderId, "projection"
     )
+    print("Model:", modelLoc)
+    print("View:", viewLoc)
+    print("Projection:", projectionLoc)
 
-    # Criando o modelo do livro
-    livro = Model(
-        os.path.join(here, "models", "book.obj")
-    )
+    models = []
 
-    # Transformações do livro
-    livro.setPosition(0.0, 1.5, -2.0)
-
+    # Livro
+    livro = Model(os.path.join(here, "models", "book.obj"))
+    livro.setPosition(-2.5, 0.75, -1.5)
     livro.setRotation(0.0, 30.0, 0.0)
+    models.append(livro)
 
-    livro.setScale(1.0, 1.0, 1.0)
+    # Estante
+    estante = Model(os.path.join(here, "models", "bookshelf.obj"))
+    estante.setPosition(2.5, 0.0, -2.5)
+    estante.setRotation(0.0, 0.0, 0.0)
+    models.append(estante)
 
+    cama = Model(os.path.join(here, "models", "bed.obj"))
+
+    cama.setPosition(-2.5, 0.0, -1.5)
+    cama.setRotation(0.0, 90.0, 0.0)
+    cama.setScale(1.0, 1.0, 1.0)
+
+    models.append(cama)
+
+    # Estrutura do quarto
+    quarto = Model(os.path.join(here, "models", "room_shell.obj"))
+
+    quarto.setPosition(0.0, 0.0, 0.0)
+    quarto.setRotation(0.0, 0.0, 0.0)
+    quarto.setScale(1.0, 1.0, 1.0)
+
+    models.append(quarto)
+
+    print("Matriz Model:")
+    print(livro.getModelMatrix())
+    print("Quantidade de vértices:", livro.qtdVertices)
+    print("Quantidade de modelos:", len(models))
+
+    print("Modelos carregados:", len(models))
     # Criando a câmera
     camera = Camera()
 
@@ -183,16 +211,12 @@ def key_callback(window, key, scancode, action, mods):
 # Renderização da cena
 def render():
 
-    glClear(
-        GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
-    )
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     glUseProgram(shaderId)
 
-    # Matriz View da câmera
     view = camera.getViewMatrix()
 
-    # Enviando matriz View
     glUniformMatrix4fv(
         viewLoc,
         1,
@@ -200,29 +224,28 @@ def render():
         glm.value_ptr(view)
     )
 
-    # Enviando matriz Projection
     glUniformMatrix4fv(
         projectionLoc,
         1,
         GL_FALSE,
         glm.value_ptr(projection)
     )
+   
+    for model in models:
 
-    # Matriz Model do livro
-    model = livro.getModelMatrix()
+        M = model.getModelMatrix()
 
-    glUniformMatrix4fv(
-        modelLoc,
-        1,
-        GL_FALSE,
-        glm.value_ptr(model)
-    )
+        glUniformMatrix4fv(
+            modelLoc,
+            1,
+            GL_FALSE,
+            glm.value_ptr(M)
+        )
 
-    # Desenhando livro
-    livro.draw()
+        model.draw()
+   
 
     glUseProgram(0)
-
 
 # Função principal
 def main():
@@ -314,7 +337,8 @@ def main():
         glfw.swap_buffers(window)
 
     # Liberando recursos
-    livro.destroy()
+    for model in models:
+        model.destroy()
     glDeleteProgram(shaderId)
 
     glfw.terminate()
