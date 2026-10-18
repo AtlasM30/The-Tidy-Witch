@@ -121,7 +121,7 @@ def build_scene(here):
 
     add_model(
         models, here, "bookshelf.obj",
-        1.05, 0.0, -3.05,
+        0.5, 0.0, -3.5,
         collision=True
     )
 
@@ -148,7 +148,6 @@ def build_scene(here):
         sx=0.65, sy=0.65, sz=0.65
     )
 
-    # OBJETO DE PAREDE — agora mais colado na parede direita
     add_model(
         models, here, "moon_garland.obj",
         4.02, 0.95, -1.25,
@@ -168,10 +167,10 @@ def build_scene(here):
         collision=True
     )
 
-    # PRATELEIRA DE PAREDE — mais encostada na parede esquerda
+    # PRATELEIRA DE PAREDE 
     add_model(
         models, here, "wall_shelves.obj",
-        -4.00, 0.32, 0.62,
+        -4.50, 0.32, 0.62,
         ry=90.0,
         sx=0.82, sy=0.82, sz=0.82
     )
@@ -201,7 +200,7 @@ def build_scene(here):
 
     add_model(
         models, here, "round_rug.obj",
-        0.25, 0.0, -0.35,
+        0.25, 0.1, -0.35,
         sx=0.90, sy=1.0, sz=0.90
     )
 
