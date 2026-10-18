@@ -37,18 +37,27 @@ class Model:
             GL_STATIC_DRAW
         )
 
-        # Atributo posição (X, Y, Z)
+        # Posição: X, Y, Z
         glEnableVertexAttribArray(0)
-
         glVertexAttribPointer(
             0,
             3,
             GL_FLOAT,
             GL_FALSE,
-            3 * 4,
+            6 * 4,
             ctypes.c_void_p(0)
         )
 
+        # Cor: R, G, B
+        glEnableVertexAttribArray(1)
+        glVertexAttribPointer(
+            1,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            6 * 4,
+            ctypes.c_void_p(3 * 4)
+        )
         # Desvinculando
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)

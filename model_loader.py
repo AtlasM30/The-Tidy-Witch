@@ -1,20 +1,56 @@
 
 import numpy as np
+import os
 
 
-def load_obj(path):
+# Carrega os materiais do arquivo MTL
+def load_mtl(path):
 
-    vertices = []
-    faces = []
+    materials = {}
+    current_material = None
 
-    # Lendo arquivo OBJ
     with open(path, "r") as file:
-
         for line in file:
 
             parts = line.strip().split()
 
-            if not parts:
+            # Ignora linhas vazias e comentários
+            if not parts or parts[0].startswith("#"):
+                continue
+
+            # Identifica um novo material
+            if parts[0] == "newmtl":
+                current_material = parts[1]
+
+            # Lê a cor difusa RGB
+            elif parts[0] == "Kd" and current_material is not None:
+
+                r = float(parts[1])
+                g = float(parts[2])
+                b = float(parts[3])
+
+                materials[current_material] = [r, g, b]
+
+    return materials
+
+
+# Carrega os modelos OBJ
+def load_obj(path):
+
+    vertices = []
+    faces = []
+    face_materials = []
+
+    materials = {}
+    current_material = None
+
+    with open(path, "r") as file:
+        for line in file:
+
+            parts = line.strip().split()
+
+            # Ignora linhas vazias e comentários
+            if not parts or parts[0].startswith("#"):
                 continue
 
             # Posições dos vértices
@@ -26,7 +62,22 @@ def load_obj(path):
 
                 vertices.append([x, y, z])
 
-            # Faces triangulares
+            # Carrega o arquivo de materiais
+            elif parts[0] == "mtllib":
+
+                mtl_path = os.path.join(
+                    os.path.dirname(path),
+                    parts[1]
+                )
+
+                materials.update(load_mtl(mtl_path))
+
+            # Define o material das próximas faces
+            elif parts[0] == "usemtl":
+
+                current_material = parts[1]
+
+            # Lê as faces do modelo
             elif parts[0] == "f":
 
                 indices = []
@@ -34,14 +85,11 @@ def load_obj(path):
                 for item in parts[1:]:
 
                     # Suporta índices como 1 ou 1/2/3
-                    indice = item.split("/")[0]
+                    indice = int(item.split("/")[0])
 
-                    indice = int(indice)
-
-                    # Índices OBJ começam em 1
+                    # OBJ começa em 1
                     if indice > 0:
                         indice -= 1
-
                     else:
                         indice = len(vertices) + indice
 
@@ -56,21 +104,33 @@ def load_obj(path):
                         indices[i + 1]
                     ])
 
-    # Expandindo os índices das faces
+                    # Associa o material ao triângulo
+                    face_materials.append(current_material)
+
+    # Prepara os vértices para renderização
     render_vertices = []
 
-    for face in faces:
+    for face, material_name in zip(faces, face_materials):
+
+        # Obtém a cor do material
+        color = materials.get(
+            material_name,
+            [1.0, 1.0, 1.0]
+        )
 
         for indice in face:
 
+            position = vertices[indice]
+
+            # Posição + cor
             render_vertices.append(
-                vertices[indice]
+                position + color
             )
 
-    # Convertendo para float32
+    # Converte para array float32
     render_vertices = np.array(
         render_vertices,
         dtype=np.float32
-    )
+    ).reshape(-1, 6)
 
     return vertices, faces, render_vertices
