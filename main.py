@@ -7,7 +7,7 @@ from OpenGL.GL import *
 import OpenGL.GL.shaders as gls
 
 from camera import Camera
-from model import Model
+from scene import build_scene
 
 
 # Variáveis globais
@@ -71,7 +71,7 @@ def init():
 
     shaderId = gls.compileProgram(vsId, fsId)
 
-    # Localização das matrizes no shader
+    # Localização dos uniforms
     modelLoc = glGetUniformLocation(
         shaderId, "model"
     )
@@ -83,53 +83,18 @@ def init():
     projectionLoc = glGetUniformLocation(
         shaderId, "projection"
     )
-    print("Model:", modelLoc)
-    print("View:", viewLoc)
-    print("Projection:", projectionLoc)
 
-    models = []
+    # Montando a cena
+    models = build_scene(here)
 
-    # Livro
-    livro = Model(os.path.join(here, "models", "book.obj"))
-    livro.setPosition(-2.5, 0.75, -1.5)
-    livro.setRotation(0.0, 30.0, 0.0)
-    models.append(livro)
-
-    # Estante
-    estante = Model(os.path.join(here, "models", "bookshelf.obj"))
-    estante.setPosition(2.5, 0.0, -2.5)
-    estante.setRotation(0.0, 0.0, 0.0)
-    models.append(estante)
-
-    cama = Model(os.path.join(here, "models", "bed.obj"))
-
-    cama.setPosition(-2.5, 0.0, -1.5)
-    cama.setRotation(0.0, 90.0, 0.0)
-    cama.setScale(1.0, 1.0, 1.0)
-
-    models.append(cama)
-
-    # Estrutura do quarto
-    quarto = Model(os.path.join(here, "models", "room_shell.obj"))
-
-    quarto.setPosition(0.0, 0.0, 0.0)
-    quarto.setRotation(0.0, 0.0, 0.0)
-    quarto.setScale(1.0, 1.0, 1.0)
-
-    models.append(quarto)
-
-    print("Matriz Model:")
-    print(livro.getModelMatrix())
-    print("Quantidade de vértices:", livro.qtdVertices)
-    print("Quantidade de modelos:", len(models))
-
-    print("Modelos carregados:", len(models))
     # Criando a câmera
     camera = Camera()
 
-    # Colisões calculadas automaticamente
-    camera.addObstacle(*cama.getBoundsXZ())
-    camera.addObstacle(*estante.getBoundsXZ())
+    # Colisões dos móveis
+    # Compatível com as posições e rotações do scene.py
+    for model in models:
+        if getattr(model, "collision", False):
+            camera.addObstacle(*model.getBoundsXZ())
 
     # Projeção em perspectiva
     projection = glm.perspective(
@@ -184,7 +149,7 @@ def mouse_callback(window, xpos, ypos):
     )
 
 
-# Tecla ESC para capturar/liberar mouse
+# ESC para capturar/liberar mouse
 def key_callback(window, key, scancode, action, mods):
 
     global mouseCaptured, firstMouse
@@ -193,32 +158,26 @@ def key_callback(window, key, scancode, action, mods):
 
         mouseCaptured = not mouseCaptured
 
-        if mouseCaptured:
-
-            glfw.set_input_mode(
-                window,
-                glfw.CURSOR,
-                glfw.CURSOR_DISABLED
-            )
-
-        else:
-
-            glfw.set_input_mode(
-                window,
-                glfw.CURSOR,
-                glfw.CURSOR_NORMAL
-            )
+        glfw.set_input_mode(
+            window,
+            glfw.CURSOR,
+            glfw.CURSOR_DISABLED
+            if mouseCaptured else glfw.CURSOR_NORMAL
+        )
 
         firstMouse = True
 
 
-# Renderização da cena
+# Renderização
 def render():
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    glClear(
+        GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
+    )
 
     glUseProgram(shaderId)
 
+    # Matriz View
     view = camera.getViewMatrix()
 
     glUniformMatrix4fv(
@@ -228,13 +187,15 @@ def render():
         glm.value_ptr(view)
     )
 
+    # Matriz Projection
     glUniformMatrix4fv(
         projectionLoc,
         1,
         GL_FALSE,
         glm.value_ptr(projection)
     )
-   
+
+    # Renderizando todos os modelos
     for model in models:
 
         M = model.getModelMatrix()
@@ -247,19 +208,17 @@ def render():
         )
 
         model.draw()
-   
 
     glUseProgram(0)
+
 
 # Função principal
 def main():
 
     if not glfw.init():
-        raise RuntimeError(
-            "Erro ao inicializar GLFW"
-        )
+        raise RuntimeError("Erro ao inicializar GLFW")
 
-    # Contexto OpenGL moderno
+    # OpenGL 4.6 Core Profile
     glfw.window_hint(
         glfw.CONTEXT_VERSION_MAJOR, 4
     )
@@ -284,10 +243,7 @@ def main():
     if not window:
 
         glfw.terminate()
-
-        raise RuntimeError(
-            "Erro ao criar janela OpenGL"
-        )
+        raise RuntimeError("Erro ao criar janela OpenGL")
 
     glfw.make_context_current(window)
 
@@ -296,10 +252,9 @@ def main():
 
     # Ajustando viewport
     width, height = glfw.get_framebuffer_size(window)
-
     glViewport(0, 0, width, height)
 
-    # Inicializando cena
+    # Inicializando jogo
     init()
 
     # Callbacks
@@ -313,7 +268,7 @@ def main():
         key_callback
     )
 
-    # Capturando o mouse
+    # Capturando mouse
     glfw.set_input_mode(
         window,
         glfw.CURSOR,
@@ -323,6 +278,7 @@ def main():
     # Controle de tempo
     lastFrame = glfw.get_time()
 
+    # Loop principal
     while not glfw.window_should_close(window):
 
         currentFrame = glfw.get_time()
@@ -332,10 +288,8 @@ def main():
 
         glfw.poll_events()
 
-        # Movimentação da câmera
         processInput(window, deltaTime)
 
-        # Renderização
         render()
 
         glfw.swap_buffers(window)
@@ -343,9 +297,11 @@ def main():
     # Liberando recursos
     for model in models:
         model.destroy()
+
     glDeleteProgram(shaderId)
 
     glfw.terminate()
+
 
 if __name__ == "__main__":
     main()

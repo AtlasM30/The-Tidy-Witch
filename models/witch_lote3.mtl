@@ -1,0 +1,57 @@
+# The Tidy Witch - Lote 3
+newmtl wood
+Kd 0.35 0.19 0.12
+
+newmtl wood_light
+Kd 0.56 0.34 0.21
+
+newmtl wood_dark
+Kd 0.20 0.11 0.10
+
+newmtl wall
+Kd 0.44 0.40 0.53
+
+newmtl trim
+Kd 0.24 0.19 0.30
+
+newmtl floor
+Kd 0.40 0.30 0.30
+
+newmtl glass_night
+Kd 0.18 0.26 0.46
+
+newmtl moon
+Kd 0.88 0.84 0.65
+
+newmtl mountain
+Kd 0.14 0.18 0.24
+
+newmtl pine
+Kd 0.15 0.28 0.22
+
+newmtl gold
+Kd 0.72 0.56 0.25
+
+newmtl candle
+Kd 0.92 0.78 0.49
+
+newmtl book_red
+Kd 0.68 0.29 0.34
+
+newmtl book_blue
+Kd 0.29 0.40 0.68
+
+newmtl book_green
+Kd 0.31 0.51 0.37
+
+newmtl paper
+Kd 0.82 0.72 0.52
+
+newmtl herb
+Kd 0.38 0.55 0.30
+
+newmtl herb_dark
+Kd 0.25 0.41 0.20
+
+newmtl cloth_dark
+Kd 0.26 0.22 0.36
