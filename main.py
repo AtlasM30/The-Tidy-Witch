@@ -1,7 +1,8 @@
 
 import glfw
 import os
-import numpy as np
+import glm
+
 from OpenGL.GL import *
 import OpenGL.GL.shaders as gls
 
@@ -15,7 +16,7 @@ camera = None
 livro = None
 
 # Matriz de projeção
-projection = np.identity(4, dtype=np.float32)
+projection = None
 
 # Localização dos uniforms
 modelLoc = None
@@ -25,79 +26,89 @@ projectionLoc = None
 # Controle do mouse
 lastX = 1280 / 2
 lastY = 720 / 2
+
 firstMouse = True
 mouseCaptured = True
 
 
-# Matriz de projeção em perspectiva
-def perspective(fov, aspect, near, far):
-
-    f = 1.0 / np.tan(np.radians(fov) / 2.0)
-
-    P = np.zeros((4, 4), dtype=np.float32)
-
-    P[0, 0] = f / aspect
-    P[1, 1] = f
-
-    P[2, 2] = (far + near) / (near - far)
-    P[2, 3] = (2 * far * near) / (near - far)
-
-    P[3, 2] = -1.0
-
-    return P
-
-
 # Configurações iniciais
 def init():
+
     global shaderId, camera, livro, projection
     global modelLoc, viewLoc, projectionLoc
 
+    # Configurações OpenGL
     glClearColor(0.2, 0.2, 0.2, 1.0)
     glEnable(GL_DEPTH_TEST)
 
-    here = os.path.dirname(os.path.abspath(__file__))
+    here = os.path.dirname(
+        os.path.abspath(__file__)
+    )
 
-    # Carregando os shaders
-    with open(os.path.join(here, "shaders", "vertexShader.glsl"), "r") as file:
+    # Carregando shaders
+    with open(
+        os.path.join(here, "shaders", "vertexShader.glsl"),
+        "r"
+    ) as file:
         vsSource = file.read()
 
-    with open(os.path.join(here, "shaders", "fragmentShader.glsl"), "r") as file:
+    with open(
+        os.path.join(here, "shaders", "fragmentShader.glsl"),
+        "r"
+    ) as file:
         fsSource = file.read()
 
     # Compilando shaders
-    vsId = gls.compileShader(vsSource, GL_VERTEX_SHADER)
-    fsId = gls.compileShader(fsSource, GL_FRAGMENT_SHADER)
+    vsId = gls.compileShader(
+        vsSource,
+        GL_VERTEX_SHADER
+    )
+
+    fsId = gls.compileShader(
+        fsSource,
+        GL_FRAGMENT_SHADER
+    )
 
     shaderId = gls.compileProgram(vsId, fsId)
 
-    # Obtendo as localizações dos uniforms
-    modelLoc = glGetUniformLocation(shaderId, "model")
-    viewLoc = glGetUniformLocation(shaderId, "view")
+    # Localização das matrizes no shader
+    modelLoc = glGetUniformLocation(
+        shaderId, "model"
+    )
+
+    viewLoc = glGetUniformLocation(
+        shaderId, "view"
+    )
+
     projectionLoc = glGetUniformLocation(
         shaderId, "projection"
     )
 
-    # Criando o modelo 3D
+    # Criando o modelo do livro
     livro = Model(
         os.path.join(here, "models", "book.obj")
     )
 
-    # Posicionando o livro na frente da câmera
+    # Transformações do livro
     livro.setPosition(0.0, 1.5, -2.0)
+
+    livro.setRotation(0.0, 30.0, 0.0)
+
+    livro.setScale(1.0, 1.0, 1.0)
 
     # Criando a câmera
     camera = Camera()
 
-    # Matriz Projection
-    projection = perspective(
-        60.0,
+    # Projeção em perspectiva
+    projection = glm.perspective(
+        glm.radians(60.0),
         1280 / 720,
         0.1,
         100.0
     )
 
 
-# Processando movimentação pelo teclado
+# Processando teclado
 def processInput(window, deltaTime):
 
     if glfw.get_key(window, glfw.KEY_W) == glfw.PRESS:
@@ -113,16 +124,19 @@ def processInput(window, deltaTime):
         camera.move("RIGHT", deltaTime)
 
 
-# Callback de movimentação do mouse
+# Movimentação do mouse
 def mouse_callback(window, xpos, ypos):
+
     global lastX, lastY, firstMouse
 
     if not mouseCaptured:
         return
 
     if firstMouse:
+
         lastX = xpos
         lastY = ypos
+
         firstMouse = False
         return
 
@@ -132,11 +146,15 @@ def mouse_callback(window, xpos, ypos):
     lastX = xpos
     lastY = ypos
 
-    camera.processMouseMovement(xoffset, yoffset)
+    camera.processMouseMovement(
+        xoffset,
+        yoffset
+    )
 
 
-# Callback do teclado
+# Tecla ESC para capturar/liberar mouse
 def key_callback(window, key, scancode, action, mods):
+
     global mouseCaptured, firstMouse
 
     if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
@@ -144,12 +162,15 @@ def key_callback(window, key, scancode, action, mods):
         mouseCaptured = not mouseCaptured
 
         if mouseCaptured:
+
             glfw.set_input_mode(
                 window,
                 glfw.CURSOR,
                 glfw.CURSOR_DISABLED
             )
+
         else:
+
             glfw.set_input_mode(
                 window,
                 glfw.CURSOR,
@@ -159,34 +180,45 @@ def key_callback(window, key, scancode, action, mods):
         firstMouse = True
 
 
-# Renderização dos objetos
+# Renderização da cena
 def render():
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    glClear(
+        GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
+    )
 
     glUseProgram(shaderId)
 
     # Matriz View da câmera
     view = camera.getViewMatrix()
 
-    # Enviando View e Projection
+    # Enviando matriz View
     glUniformMatrix4fv(
-        viewLoc, 1, GL_TRUE, view
+        viewLoc,
+        1,
+        GL_FALSE,
+        glm.value_ptr(view)
     )
 
+    # Enviando matriz Projection
     glUniformMatrix4fv(
-        projectionLoc, 1, GL_TRUE, projection
+        projectionLoc,
+        1,
+        GL_FALSE,
+        glm.value_ptr(projection)
     )
 
-    # Enviando a matriz Model do livro
+    # Matriz Model do livro
+    model = livro.getModelMatrix()
+
     glUniformMatrix4fv(
         modelLoc,
         1,
-        GL_TRUE,
-        livro.getModelMatrix()
+        GL_FALSE,
+        glm.value_ptr(model)
     )
 
-    # Desenhando o livro
+    # Desenhando livro
     livro.draw()
 
     glUseProgram(0)
@@ -196,55 +228,87 @@ def render():
 def main():
 
     if not glfw.init():
-        raise RuntimeError("Erro ao inicializar GLFW")
+        raise RuntimeError(
+            "Erro ao inicializar GLFW"
+        )
 
-    glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
-    glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 6)
+    # Contexto OpenGL moderno
+    glfw.window_hint(
+        glfw.CONTEXT_VERSION_MAJOR, 4
+    )
+
+    glfw.window_hint(
+        glfw.CONTEXT_VERSION_MINOR, 6
+    )
+
     glfw.window_hint(
         glfw.OPENGL_PROFILE,
         glfw.OPENGL_CORE_PROFILE
     )
 
     window = glfw.create_window(
-        1280, 720, "The Tidy Witch", None, None
+        1280,
+        720,
+        "The Tidy Witch",
+        None,
+        None
     )
 
     if not window:
+
         glfw.terminate()
-        raise RuntimeError("Erro ao criar janela OpenGL")
+
+        raise RuntimeError(
+            "Erro ao criar janela OpenGL"
+        )
 
     glfw.make_context_current(window)
 
+    # Sincronização vertical
     glfw.swap_interval(1)
 
+    # Ajustando viewport
+    width, height = glfw.get_framebuffer_size(window)
+
+    glViewport(0, 0, width, height)
+
+    # Inicializando cena
     init()
 
-    # Registrando callbacks
-    glfw.set_cursor_pos_callback(window, mouse_callback)
-    glfw.set_key_callback(window, key_callback)
+    # Callbacks
+    glfw.set_cursor_pos_callback(
+        window,
+        mouse_callback
+    )
 
-    # Capturando cursor inicialmente
+    glfw.set_key_callback(
+        window,
+        key_callback
+    )
+
+    # Capturando o mouse
     glfw.set_input_mode(
         window,
         glfw.CURSOR,
         glfw.CURSOR_DISABLED
     )
 
-    # Controle do tempo
+    # Controle de tempo
     lastFrame = glfw.get_time()
 
     while not glfw.window_should_close(window):
 
         currentFrame = glfw.get_time()
+
         deltaTime = currentFrame - lastFrame
         lastFrame = currentFrame
 
         glfw.poll_events()
 
-        # Processando movimentação
+        # Movimentação da câmera
         processInput(window, deltaTime)
 
-        # Renderizando
+        # Renderização
         render()
 
         glfw.swap_buffers(window)
@@ -254,7 +318,6 @@ def main():
     glDeleteProgram(shaderId)
 
     glfw.terminate()
-
 
 if __name__ == "__main__":
     main()

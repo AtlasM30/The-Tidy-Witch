@@ -1,6 +1,6 @@
 
 import ctypes
-import numpy as np
+import glm
 from OpenGL.GL import *
 from model_loader import load_obj
 
@@ -9,14 +9,17 @@ class Model:
 
     def __init__(self, path):
 
-        # Carregando os vértices do arquivo OBJ
+        # Carregando o arquivo OBJ
         vertices, faces, render_vertices = load_obj(path)
 
-        # Quantidade de vértices
         self.qtdVertices = len(render_vertices)
 
-        # Matriz Model inicial (identidade)
-        self.model = np.identity(4, dtype=np.float32)
+        # Transformações do objeto
+        self.position = glm.vec3(0.0, 0.0, 0.0)
+
+        self.rotation = glm.vec3(0.0, 0.0, 0.0)
+
+        self.scale = glm.vec3(1.0, 1.0, 1.0)
 
         # Criando VAO
         self.vaoId = glGenVertexArrays(1)
@@ -26,7 +29,7 @@ class Model:
         self.vboId = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, self.vboId)
 
-        # Enviando os vértices para a GPU
+        # Enviando vértices para GPU
         glBufferData(
             GL_ARRAY_BUFFER,
             render_vertices.nbytes,
@@ -34,8 +37,9 @@ class Model:
             GL_STATIC_DRAW
         )
 
-        # Configurando atributo posição (x, y, z)
+        # Atributo posição (X, Y, Z)
         glEnableVertexAttribArray(0)
+
         glVertexAttribPointer(
             0,
             3,
@@ -45,11 +49,60 @@ class Model:
             ctypes.c_void_p(0)
         )
 
-        # Desvinculando VAO e VBO
+        # Desvinculando
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)
 
-    # Desenha o modelo
+    # Define a posição do objeto
+    def setPosition(self, x, y, z):
+
+        self.position = glm.vec3(x, y, z)
+
+    # Define a rotação em graus
+    def setRotation(self, x, y, z):
+
+        self.rotation = glm.vec3(x, y, z)
+
+    # Define a escala
+    def setScale(self, x, y, z):
+
+        self.scale = glm.vec3(x, y, z)
+
+    # Constrói a matriz Model
+    def getModelMatrix(self):
+
+        M = glm.mat4(1.0)
+
+        # Translação
+        M = glm.translate(M, self.position)
+
+        # Rotação em X
+        M = glm.rotate(
+            M,
+            glm.radians(self.rotation.x),
+            glm.vec3(1.0, 0.0, 0.0)
+        )
+
+        # Rotação em Y
+        M = glm.rotate(
+            M,
+            glm.radians(self.rotation.y),
+            glm.vec3(0.0, 1.0, 0.0)
+        )
+
+        # Rotação em Z
+        M = glm.rotate(
+            M,
+            glm.radians(self.rotation.z),
+            glm.vec3(0.0, 0.0, 1.0)
+        )
+
+        # Escala
+        M = glm.scale(M, self.scale)
+
+        return M
+
+    # Desenha o objeto
     def draw(self):
 
         glBindVertexArray(self.vaoId)
@@ -62,19 +115,7 @@ class Model:
 
         glBindVertexArray(0)
 
-    # Define a posição do modelo
-    def setPosition(self, x, y, z):
-
-        self.model[0, 3] = x
-        self.model[1, 3] = y
-        self.model[2, 3] = z
-
-    # Retorna a matriz Model
-    def getModelMatrix(self):
-
-        return self.model
-
-    # Libera os recursos do OpenGL
+    # Libera recursos
     def destroy(self):
 
         glDeleteBuffers(1, [self.vboId])

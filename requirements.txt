@@ -1,0 +1,5 @@
+glfw
+PyOpenGL
+PyOpenGL-accelerate
+numpy
+PSM
