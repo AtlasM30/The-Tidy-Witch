@@ -25,12 +25,60 @@ class Camera:
         # Sensibilidade do mouse
         self.sensitivity = 0.1
 
+        # Raio de colisão do jogador
+        self.radius = 0.25
+
+        # Limites internos aproximados do quarto
+        self.roomBounds = (-4.1, 4.1, -3.6, 3.45)
+
+        # Caixas de colisão dos móveis
+        self.obstacles = []
+
+    # Registra um obstáculo
+    def addObstacle(self, minX, maxX, minZ, maxZ):
+
+        self.obstacles.append(
+            (minX, maxX, minZ, maxZ)
+        )
+
+    # Verifica se uma posição está livre
+    def canMoveTo(self, x, z):
+
+        minX, maxX, minZ, maxZ = self.roomBounds
+
+        # Verifica os limites do quarto
+        if x - self.radius < minX:
+            return False
+
+        if x + self.radius > maxX:
+            return False
+
+        if z - self.radius < minZ:
+            return False
+
+        if z + self.radius > maxZ:
+            return False
+
+        # Verifica colisão com os móveis
+        for obsMinX, obsMaxX, obsMinZ, obsMaxZ in self.obstacles:
+
+            closestX = max(obsMinX, min(x, obsMaxX))
+            closestZ = max(obsMinZ, min(z, obsMaxZ))
+
+            dx = x - closestX
+            dz = z - closestZ
+
+            if dx * dx + dz * dz < self.radius * self.radius:
+                return False
+
+        return True
+
     # Movimentação pelo teclado
     def move(self, direction, deltaTime):
 
         velocity = self.speed * deltaTime
 
-        # Movimento somente no plano XZ
+        # Direção horizontal da câmera
         horizontalFront = glm.normalize(
             glm.vec3(
                 self.front.x,
@@ -44,17 +92,30 @@ class Camera:
             glm.cross(horizontalFront, self.up)
         )
 
+        movement = glm.vec3(0.0, 0.0, 0.0)
+
         if direction == "FORWARD":
-            self.position += horizontalFront * velocity
+            movement = horizontalFront * velocity
 
         elif direction == "BACKWARD":
-            self.position -= horizontalFront * velocity
+            movement = -horizontalFront * velocity
 
         elif direction == "LEFT":
-            self.position -= right * velocity
+            movement = -right * velocity
 
         elif direction == "RIGHT":
-            self.position += right * velocity
+            movement = right * velocity
+
+        # Próxima posição
+        newX = self.position.x + movement.x
+        newZ = self.position.z + movement.z
+
+        # Verifica cada eixo separadamente
+        if self.canMoveTo(newX, self.position.z):
+            self.position.x = newX
+
+        if self.canMoveTo(self.position.x, newZ):
+            self.position.z = newZ
 
     # Rotação da câmera pelo mouse
     def processMouseMovement(self, xoffset, yoffset):
@@ -68,7 +129,7 @@ class Camera:
         yaw = glm.radians(self.yaw)
         pitch = glm.radians(self.pitch)
 
-        # Nova direção da câmera
+        # Calcula a direção da câmera
         direction = glm.vec3(
             glm.cos(yaw) * glm.cos(pitch),
             glm.sin(pitch),

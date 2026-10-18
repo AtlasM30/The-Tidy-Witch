@@ -127,6 +127,10 @@ def init():
     # Criando a câmera
     camera = Camera()
 
+    # Colisões calculadas automaticamente
+    camera.addObstacle(*cama.getBoundsXZ())
+    camera.addObstacle(*estante.getBoundsXZ())
+
     # Projeção em perspectiva
     projection = glm.perspective(
         glm.radians(60.0),

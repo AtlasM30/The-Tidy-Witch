@@ -134,24 +134,3 @@ def load_obj(path):
     ).reshape(-1, 6)
 
     return vertices, faces, render_vertices
-if __name__ == "__main__":
-
-    import os
-    import numpy as np
-
-    here = os.path.dirname(os.path.abspath(__file__))
-
-    path = os.path.join(here, "models", "room_shell.obj")
-
-    vertices, faces, render_vertices = load_obj(path)
-
-    positions = np.array(vertices, dtype=np.float32)
-
-    minimo = positions.min(axis=0)
-    maximo = positions.max(axis=0)
-
-    print("Modelo: room_shell.obj")
-    print("Mínimo:", minimo)
-    print("Máximo:", maximo)
-    print("Dimensões:", maximo - minimo)
-    print("Faces:", len(faces))

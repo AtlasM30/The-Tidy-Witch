@@ -12,6 +12,12 @@ class Model:
         # Carregando o arquivo OBJ
         vertices, faces, render_vertices = load_obj(path)
 
+        # Guarda os vértices originais para calcular colisões
+        self.vertices = [
+            glm.vec3(v[0], v[1], v[2])
+            for v in vertices
+        ]
+
         self.qtdVertices = len(render_vertices)
 
         # Transformações do objeto
@@ -129,3 +135,26 @@ class Model:
 
         glDeleteBuffers(1, [self.vboId])
         glDeleteVertexArrays(1, [self.vaoId])
+       
+    def getBoundsXZ(self):
+
+        M = self.getModelMatrix()
+
+        minX = float("inf")
+        maxX = float("-inf")
+        minZ = float("inf")
+        maxZ = float("-inf")
+
+        for vertex in self.vertices:
+
+            # Aplica as transformações do modelo
+            transformed = M * glm.vec4(vertex, 1.0)
+
+            minX = min(minX, transformed.x)
+            maxX = max(maxX, transformed.x)
+
+            minZ = min(minZ, transformed.z)
+            maxZ = max(maxZ, transformed.z)
+
+        return minX, maxX, minZ, maxZ
+
