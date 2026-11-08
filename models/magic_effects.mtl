@@ -1,0 +1,10 @@
+newmtl dust_top
+Kd 0.76 0.51 0.88
+newmtl dust_side
+Kd 0.48 0.30 0.64
+newmtl wood_wand
+Kd 0.40 0.22 0.13
+newmtl wand_wrap
+Kd 0.68 0.46 0.27
+newmtl magic_gem
+Kd 0.73 0.47 0.96
