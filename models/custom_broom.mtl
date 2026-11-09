@@ -31,3 +31,16 @@ Kd 0.43 0.65 0.95
 
 newmtl laco_golden
 Kd 0.96 0.75 0.25
+
+newmtl trim_brass
+Kd 0.87 0.66 0.28
+newmtl trim_dark
+Kd 0.29 0.23 0.20
+newmtl gem_amethyst
+Kd 0.68 0.38 0.94
+newmtl gem_moon
+Kd 0.62 0.86 0.96
+newmtl gem_ember
+Kd 0.98 0.42 0.15
+newmtl gem_forest
+Kd 0.38 0.78 0.42

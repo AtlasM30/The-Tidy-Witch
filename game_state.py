@@ -4,6 +4,7 @@ import glm
 from interaction import aim_at, horizontal_floor_hit, world_aabb
 from cleaning import CleaningSystem
 from broom_customization import BroomCustomization
+from organization_slots import place_item
 
 
 class GameState:
@@ -19,6 +20,7 @@ class GameState:
         self.unlocked_accessories = set()
         self.collected_accessories = 0
         self.organized = 0
+        self.used_slots = {key: 0 for key in ("livro", "pocao", "pergaminho", "cristal")}
         self.elapsed = 0.0
         self._held_offset = glm.vec3(0.0)
         self.cleaning = CleaningSystem([m for m in models if getattr(m, "interaction_kind", None) == "dirt"])
@@ -111,8 +113,16 @@ class GameState:
         if destination.destination_type != self.held.item_type:
             self.message = f'Destino incorreto! {self.held.display_name} nao pertence aqui.'
             return
-        self.held.setPosition(*destination.slot_position)
-        self.held.setRotation(*destination.slot_rotation)
+        item_type = self.held.item_type
+        slot_index = self.used_slots.get(item_type, 0)
+        try:
+            final_position, final_rotation = place_item(self.held, slot_index)
+        except ValueError:
+            self.message = 'Todos os espacos deste destino estao ocupados.'
+            return
+        self.held.setPosition(*final_position)
+        self.held.setRotation(*final_rotation)
+        self.used_slots[item_type] = slot_index + 1
         self.held.organized = True
         self.held = None
         self.organized += 1

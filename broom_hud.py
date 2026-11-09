@@ -67,6 +67,31 @@ def _geometry(selection):
         width=.074 if i in (1,3) else .06
         segment(r,t,width,br_dark,br_light if i%2 else br_dark)
         segment((r[0]+.012,r[1]+.055),(t[0]+.006,t[1]-.055),.009,br_light)
+    # Fibras secundarias: mais volume e pontas assimetricas.
+    for i in range(13):
+        f=i/12
+        x=-.035+f*.23
+        topx=-.34+f*.53
+        topy=.71+.09*math.sin(f*math.pi)+.03*math.sin(i*2.13)
+        segment((x,.31+.02*math.sin(i)),(topx,topy),.014,
+                br_dark if i%3==0 else br_light)
+    # Anel de encaixe facetado e pequenas tachas no metal.
+    segment((-.004,.35),(.20,.42),.050,(.39,.32,.28),(.95,.75,.44))
+    for x,y in ((.015,.365),(.08,.384),(.145,.407)):
+        poly([(x-.010,y),(x,y+.018),(x+.010,y),(x,y-.017)],(.98,.87,.57))
+    # Entalhes e arabescos adicionais no cabo.
+    for i in range(6):
+        t=.37+i*.075
+        x=grip[0]*(1-t)+neck[0]*t
+        y=grip[1]*(1-t)+neck[1]*t
+        segment((x-.016,y-.012),(x+.018,y+.017),.013,light)
+    # Emblema que diferencia o cabo encantado, lunar ou de brasas.
+    shaft_style=selection.get('cabo','basic')
+    if shaft_style!='basic':
+        symbol={'magic':(.85,.63,.99),'moon':(.66,.87,1.0),'ember':(1.0,.68,.27)}[shaft_style]
+        x,y=.47,-.28
+        poly([(x,y+.067),(x+.043,y),(x,y-.063),(x-.043,y)],symbol)
+        poly([(x,y+.038),(x+.018,y),(x,y-.038),(x-.018,y)],(.96,.93,.73))
     # Wrap string securing the head
     segment((-.015,.31),(.20,.39),.034,(.40,.23,.10),(.83,.58,.25))
     segment((-.025,.34),(.205,.42),.013,(.97,.76,.39))

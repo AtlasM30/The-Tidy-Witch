@@ -266,6 +266,13 @@ def build_scene(here):
         (-1.75,  0.55, 0.52, 0.53),
         ( 1.05, -1.35, 0.53, 0.50),
         ( 3.12, -2.50, 0.48, 0.50),
+        # Novas manchas: 6 novos objetos organizaveis.
+        (-3.15, -1.38, 0.52, 0.50),
+        (-0.15,  0.65, 0.49, 0.53),
+        ( 2.30, -2.55, 0.50, 0.50),
+        (-2.80, -0.95, 0.44, 0.48),
+        ( 1.65, -2.78, 0.46, 0.50),
+        (-0.85, -2.75, 0.48, 0.48),
     ]
     dirt_patches = []
     for index, (x, z, sx, sz) in enumerate(dirt_locations, start=1):
@@ -287,7 +294,7 @@ def build_scene(here):
         dirt.dirt_scale_z = sz
         dirt_patches.append(dirt)
 
-    # Itens escondidos: 4 objetos de organizacao e 3 acessorios.
+    # Itens escondidos: 10 objetos organizaveis e 9 acessorios.
     # Os OBJ sao carregados normalmente, mas o renderizador nao desenha
     # nenhum deles ate a mancha associada terminar a animacao.
     hidden_items = [
@@ -304,6 +311,12 @@ def build_scene(here):
         ("broom_bundle.obj", "cerdas_starlight", "Cerdas estelares", 0.45, "accessory"),
         ("moon_garland.obj", "laco_lunar", "Laco lunar", 0.25, "accessory"),
         ("moon_garland.obj", "laco_golden", "Laco dourado", 0.25, "accessory"),
+        ("book.obj", "livro", "Grimorio das estrelas", 0.58, "item"),
+        ("potion_bottle.obj", "pocao", "Pocao azul", 0.53, "item"),
+        ("crystal.obj", "cristal", "Cristal da lua", 0.55, "item"),
+        ("book.obj", "livro", "Manual de alquimia", 0.56, "item"),
+        ("potion_bottle.obj", "pocao", "Essencia encantada", 0.53, "item"),
+        ("scroll_set.obj", "pergaminho", "Mapa magico", 0.34, "item"),
     ]
     for patch, (filename, kind, name, size, interaction_kind) in zip(dirt_patches, hidden_items):
         # Ajusta o deslocamento vertical segundo os limites reais do OBJ,
@@ -324,6 +337,8 @@ def build_scene(here):
         bottom_y = min(v.y for v in obj.vertices) * size
         obj.setPosition(patch.dirt_x, 0.055 - bottom_y, patch.dirt_z)
         obj.reveal_ground_y = obj.position.y
+        # Os slots recebem a altura da BASE do objeto, nunca a origem do OBJ.
+        obj.slot_floor_offset = min(v.y for v in obj.vertices) * size
         patch.hidden_item = obj
 
     return models
