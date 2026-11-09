@@ -11,12 +11,14 @@ class CleaningSystem:
         self.patches = patches
         self.aimed = None
         self.cleaned = 0
+        self.newly_cleaned = []
 
     @property
     def total(self):
         return len(self.patches)
 
     def update(self, camera, dt, enabled=True):
+        self.newly_cleaned = []
         self.aimed = None
         closest = float('inf')
         for patch in self.patches:
@@ -31,6 +33,7 @@ class CleaningSystem:
                 if t >= 1.0:
                     patch.cleaned = True
                     self.cleaned += 1
+                    self.newly_cleaned.append(patch)
                 continue
             if not enabled:
                 continue

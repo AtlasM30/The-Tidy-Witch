@@ -1,0 +1,33 @@
+newmtl cabo_basic
+Kd 0.52 0.29 0.15
+
+newmtl cabo_magic
+Kd 0.55 0.27 0.78
+
+newmtl cerdas_basic
+Kd 0.75 0.56 0.26
+
+newmtl cerdas_magic
+Kd 0.27 0.79 0.79
+
+newmtl laco_magic
+Kd 0.96 0.33 0.69
+
+
+newmtl cabo_moon
+Kd 0.25 0.48 0.73
+
+newmtl cabo_ember
+Kd 0.78 0.32 0.18
+
+newmtl cerdas_forest
+Kd 0.34 0.72 0.33
+
+newmtl cerdas_starlight
+Kd 0.83 0.7 0.93
+
+newmtl laco_lunar
+Kd 0.43 0.65 0.95
+
+newmtl laco_golden
+Kd 0.96 0.75 0.25

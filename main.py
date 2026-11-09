@@ -10,6 +10,7 @@ from camera import Camera
 from scene import build_scene
 from game_state import GameState
 from wand_hud import WandHUD
+from broom_hud import BroomHUD
 
 
 # Variáveis globais
@@ -18,6 +19,7 @@ camera = None
 models = []
 game = None
 wand = None
+broom_hud = None
 
 # Matriz de projeção
 projection = None
@@ -39,7 +41,7 @@ mouseCaptured = True
 # Configurações iniciais
 def init():
 
-    global shaderId, camera, models, projection, game, wand
+    global shaderId, camera, models, projection, game, wand, broom_hud
     global modelLoc, viewLoc, projectionLoc, highlightLoc
 
     # Configurações OpenGL
@@ -105,6 +107,7 @@ def init():
 
     game = GameState(models, camera)
     wand = WandHUD()
+    broom_hud = BroomHUD(game.broom)
 
     # Projeção em perspectiva
     projection = glm.perspective(
@@ -117,6 +120,8 @@ def init():
 
 # Processando teclado
 def processInput(window, deltaTime):
+    if game.broom.active:
+        return
 
     if glfw.get_key(window, glfw.KEY_W) == glfw.PRESS:
         camera.move("FORWARD", deltaTime)
@@ -136,7 +141,7 @@ def mouse_callback(window, xpos, ypos):
 
     global lastX, lastY, firstMouse
 
-    if not mouseCaptured:
+    if not mouseCaptured or game.broom.active:
         return
 
     if firstMouse:
@@ -165,9 +170,24 @@ def key_callback(window, key, scancode, action, mods):
     global mouseCaptured, firstMouse
 
     if action == glfw.PRESS and mouseCaptured:
-        if key == glfw.KEY_E:
+        if game.broom.active:
+            if key in (glfw.KEY_E, glfw.KEY_ESCAPE):
+                game.broom.exit()
+                firstMouse = True
+                return
+            if key in (glfw.KEY_1, glfw.KEY_2, glfw.KEY_3):
+                game.broom.toggle(str(key - glfw.KEY_0), game.unlocked_accessories)
+                return
+            return
+        if key == glfw.KEY_1:
+            game.equip('wand')
+        elif key == glfw.KEY_2:
+            game.equip('broom')
+        elif key == glfw.KEY_E:
+            before = game.broom.active
             game.interact()
-            wand.cast()
+            if not before and not game.broom.active:
+                (broom_hud if game.equipped == 'broom' else wand).cast()
         elif key == glfw.KEY_Q:
             game.drop()
 
@@ -188,7 +208,8 @@ def key_callback(window, key, scancode, action, mods):
 def mouse_button_callback(window, button, action, mods):
     if mouseCaptured and button == glfw.MOUSE_BUTTON_LEFT and action == glfw.PRESS:
         game.interact()
-        wand.cast()
+        if not game.broom.active:
+            (broom_hud if game.equipped == 'broom' else wand).cast()
 
 
 # Renderização
@@ -220,6 +241,8 @@ def render():
 
     # Renderizando todos os modelos
     for model in models:
+        if hasattr(model, 'custom_visible') and not model.custom_visible:
+            continue
 
         M = model.getModelMatrix()
 
@@ -240,7 +263,9 @@ def render():
         else:
             glUniform3f(highlightLoc, 1.0, 1.0, 1.0)
 
-        if getattr(model, 'cleaned', False):
+        if getattr(model, 'cleaned', False) or getattr(model, 'collected', False):
+            continue
+        if not getattr(model, 'revealed', True):
             continue
         if model is game.cleaning.aimed:
             glUniform3f(highlightLoc, 1.50, 1.12, 1.65)
@@ -248,7 +273,11 @@ def render():
 
     # Desenha a varinha em primeiro plano usando o shader e VAO próprios.
     glUseProgram(0)
-    wand.draw()
+    if not game.broom.active:
+        if game.equipped == 'wand':
+            wand.draw()
+        else:
+            broom_hud.draw()
 
 
 # Função principal
@@ -332,6 +361,7 @@ def main():
         processInput(window, deltaTime)
         game.update(deltaTime)
         wand.update(deltaTime)
+        broom_hud.update(deltaTime)
         # Feedback simples: evita depender de bibliotecas de HUD externas.
         glfw.set_window_title(window, "The Tidy Witch | " + game.status())
 
@@ -348,6 +378,7 @@ def main():
         model.destroy()
 
     wand.destroy()
+    broom_hud.destroy()
     glDeleteProgram(shaderId)
 
     glfw.terminate()

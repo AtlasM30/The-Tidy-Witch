@@ -53,12 +53,14 @@ def aim_at(models, camera, held=None, max_distance=3.5):
     """
     candidates = []
     for model in models:
-        if model is held or getattr(model, 'organized', False):
+        if model is held or getattr(model, 'organized', False) or getattr(model, 'collected', False):
+            continue
+        if not getattr(model, 'revealed', True):
             continue
         kind = getattr(model, 'interaction_kind', None)
-        if kind not in ('item', 'destination'):
+        if kind not in ('item', 'destination', 'accessory'):
             continue
-        if held is None and kind != 'item':
+        if held is None and kind not in ('item', 'accessory'):
             continue
         if held is not None and kind != 'destination':
             continue
