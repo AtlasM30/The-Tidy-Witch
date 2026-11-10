@@ -2,7 +2,7 @@
 import ctypes
 import glm
 from OpenGL.GL import *
-from model_loader import load_obj
+from model_loader import load_obj, find_emissive_anchors
 
 
 class Model:
@@ -16,6 +16,13 @@ class Model:
         self.vertices = [
             glm.vec3(v[0], v[1], v[2])
             for v in vertices
+        ]
+
+        # Pontos (em coordenadas locais) onde ficam as velas: a base da
+        # malha "flame" de cada uma. A malha continua no modelo; a luz da
+        # vela sai desse ponto.
+        self.flame_anchors = [
+            glm.vec3(*c) for c in find_emissive_anchors(render_vertices)
         ]
 
         self.qtdVertices = len(render_vertices)
@@ -43,26 +50,31 @@ class Model:
             GL_STATIC_DRAW
         )
 
+        # Cada vértice tem 12 floats (ver model_loader.load_obj)
+        stride = 12 * 4
+
         # Posição: X, Y, Z
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(
-            0,
-            3,
-            GL_FLOAT,
-            GL_FALSE,
-            6 * 4,
-            ctypes.c_void_p(0)
+            0, 3, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(0)
         )
 
-        # Cor: R, G, B
+        # Cor difusa: R, G, B
         glEnableVertexAttribArray(1)
         glVertexAttribPointer(
-            1,
-            3,
-            GL_FLOAT,
-            GL_FALSE,
-            6 * 4,
-            ctypes.c_void_p(3 * 4)
+            1, 3, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(3 * 4)
+        )
+
+        # Normal da face: X, Y, Z (usada no modelo de Phong)
+        glEnableVertexAttribArray(2)
+        glVertexAttribPointer(
+            2, 3, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(6 * 4)
+        )
+
+        # Material: emissivo, intensidade especular (ks), brilho (ns)
+        glEnableVertexAttribArray(3)
+        glVertexAttribPointer(
+            3, 3, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(9 * 4)
         )
         # Desvinculando
         glBindBuffer(GL_ARRAY_BUFFER, 0)

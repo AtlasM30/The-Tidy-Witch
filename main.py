@@ -11,7 +11,7 @@ from scene import build_scene
 from game_state import GameState
 from wand_hud import WandHUD
 from broom_hud import BroomHUD
-
+from lighting import LightingSystem
 
 # Variáveis globais
 shaderId = None
@@ -20,6 +20,7 @@ models = []
 game = None
 wand = None
 broom_hud = None
+lighting = None
 
 # Matriz de projeção
 projection = None
@@ -41,7 +42,7 @@ mouseCaptured = True
 # Configurações iniciais
 def init():
 
-    global shaderId, camera, models, projection, game, wand, broom_hud
+    global shaderId, camera, models, projection, game, wand, broom_hud, lighting
     global modelLoc, viewLoc, projectionLoc, highlightLoc
 
     # Configurações OpenGL
@@ -108,6 +109,10 @@ def init():
     game = GameState(models, camera)
     wand = WandHUD()
     broom_hud = BroomHUD(game.broom)
+
+    # Luzes: chamas das velas (detectadas nos modelos) + ponta da varinha
+    lighting = LightingSystem(models, here)
+    lighting.bind(shaderId)
 
     # Projeção em perspectiva
     projection = glm.perspective(
@@ -190,6 +195,8 @@ def key_callback(window, key, scancode, action, mods):
                 (broom_hud if game.equipped == 'broom' else wand).cast()
         elif key == glfw.KEY_Q:
             game.drop()
+        elif key == glfw.KEY_F:
+            toggle_wand_light()
 
     if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
 
@@ -205,7 +212,17 @@ def key_callback(window, key, scancode, action, mods):
         firstMouse = True
 
 
+def toggle_wand_light():
+    on = lighting.toggle_wand_light()
+    game.message = 'Luz da varinha ligada.' if on else 'Luz da varinha apagada.'
+
+
 def mouse_button_callback(window, button, action, mods):
+    # Botão direito: liga/desliga a luz da varinha
+    if (mouseCaptured and button == glfw.MOUSE_BUTTON_RIGHT
+            and action == glfw.PRESS and not game.broom.active):
+        toggle_wand_light()
+        return
     if mouseCaptured and button == glfw.MOUSE_BUTTON_LEFT and action == glfw.PRESS:
         game.interact()
         if not game.broom.active:
@@ -238,6 +255,9 @@ def render():
         GL_FALSE,
         glm.value_ptr(projection)
     )
+
+    # Câmera, luz ambiente e luzes pontuais (modelo de Phong)
+    lighting.upload(shaderId, camera, view, projection)
 
     # Renderizando todos os modelos
     for model in models:
@@ -362,6 +382,8 @@ def main():
         game.update(deltaTime)
         wand.update(deltaTime)
         broom_hud.update(deltaTime)
+        lighting.update(deltaTime, wand,
+                        game.equipped == 'wand' and not game.broom.active)
         # Feedback simples: evita depender de bibliotecas de HUD externas.
         glfw.set_window_title(window, "The Tidy Witch | " + game.status())
 
@@ -379,6 +401,7 @@ def main():
 
     wand.destroy()
     broom_hud.destroy()
+    lighting.destroy()
     glDeleteProgram(shaderId)
 
     glfw.terminate()
