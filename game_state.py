@@ -103,7 +103,13 @@ class GameState:
             bounds = world_aabb(item)
             center = (bounds[0] + bounds[1]) * 0.5
             self._held_offset = center - item.position
-            self.message = f'{item.display_name} levitando! Aponte para o destino e pressione E.'
+            target_name = {
+                'livro': 'estante',
+                'pocao': 'bancada de alquimia',
+                'pergaminho': 'escrivaninha',
+                'cristal': 'cesto no corredor central, perto do tapete',
+            }.get(item.item_type, 'destino correto')
+            self.message = f'{item.display_name} levitando! Leve ate {target_name} e pressione E.'
             return
 
         destination = self.aimed
