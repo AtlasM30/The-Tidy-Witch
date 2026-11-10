@@ -85,7 +85,7 @@ A aplicação utiliza recursos do pipeline gráfico programável:
 
 O sistema de carregamento interpreta informações básicas dos arquivos OBJ, incluindo vértices, faces e materiais.
 
-Os materiais MTL fornecem as cores difusas `Kd`, utilizadas para colorir os modelos sem depender de texturas.
+Os materiais MTL fornecem as cores difusas `Kd`. O carregador tambem suporta coordenadas ST (gravadas como `vt` no formato OBJ) e texturas de imagem. No momento, o piso, as paredes principais e a colcha da cama usam texturas; os demais materiais continuam usando suas cores `Kd`.
 
 Essa abordagem permite adicionar novos objetos ao cenário sem modificar a lógica principal de renderização, desde que sejam compatíveis com o carregador implementado.
 
@@ -136,6 +136,7 @@ Essas modificações preservam o tema e os objetivos centrais do projeto.
 | GLFW                      | Janela, contexto gráfico e entradas    |
 | PyGLM                     | Operações vetoriais e matriciais       |
 | NumPy                     | Preparação dos arrays de vértices      |
+| Pillow                    | Carregamento da textura de imagem      |
 | GLSL                      | Programação dos shaders                |
 | OBJ / MTL                 | Armazenamento de geometria e materiais |
 
@@ -214,7 +215,7 @@ py -m pip install -r requirements.txt
 Caso ainda não exista um `requirements.txt`, as principais dependências são:
 
 ```bash
-py -m pip install glfw PyOpenGL PyOpenGL-accelerate PyGLM numpy
+py -m pip install glfw PyOpenGL PyOpenGL-accelerate PyGLM numpy Pillow
 ```
 
 ### 3. Executar a aplicação
