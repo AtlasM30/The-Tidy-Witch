@@ -55,3 +55,6 @@ Kd 0.25 0.41 0.20
 
 newmtl cloth_dark
 Kd 0.26 0.22 0.36
+
+newmtl flame
+Kd 0.98 0.64 0.20

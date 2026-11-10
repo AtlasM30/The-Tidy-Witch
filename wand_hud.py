@@ -9,7 +9,7 @@ import math
 import numpy as np
 from OpenGL.GL import *
 import OpenGL.GL.shaders as gls
-
+from pathlib import Path
 
 def _make_vertices():
     data = []
@@ -76,23 +76,41 @@ def _make_vertices():
     return np.array(data,dtype=np.float32).reshape(-1,5)
 
 
+# Centro do cristal (a ponta que brilha) em coordenadas NDC, sem offsets.
+TIP_NDC = (.315, -.045)
+GLOW_COLOR = (.66, .46, 1.0)
+GLOW_RADIUS = .20   # meia-altura do halo em unidades NDC
+
+
 class WandHUD:
     def __init__(self):
-        vertex_shader = """#version 460 core
-layout(location=0) in vec2 p;
-layout(location=1) in vec3 color;
-uniform vec2 offset;
-out vec3 v_color;
-void main() { v_color=color; gl_Position=vec4(p+offset,0.0,1.0); }
-"""
-        fragment_shader = """#version 460 core
-in vec3 v_color;
-out vec4 fragColor;
-void main() { fragColor=vec4(v_color,1.0); }
-"""
+        vertex_shader = """
+            #version 460 core
+            layout(location=0) in vec2 p;
+            layout(location=1) in vec3 color;
+            uniform vec2 offset;
+            out vec3 v_color;
+
+            void main() {
+                v_color = color;
+                gl_Position = vec4(p + offset, 0.0, 1.0);
+            }
+            """
+
+        fragment_shader = """
+            #version 460 core
+            in vec3 v_color;
+            out vec4 fragColor;
+
+            void main() {
+                fragColor = vec4(v_color, 1.0);
+            }
+            """
+
         self.program = gls.compileProgram(
-            gls.compileShader(vertex_shader,GL_VERTEX_SHADER),
-            gls.compileShader(fragment_shader,GL_FRAGMENT_SHADER))
+            gls.compileShader(vertex_shader, GL_VERTEX_SHADER),
+            gls.compileShader(fragment_shader, GL_FRAGMENT_SHADER)
+        )
         self.offset_loc = glGetUniformLocation(self.program,'offset')
         vertices=_make_vertices()
         self.vertex_count=len(vertices)
@@ -109,6 +127,85 @@ void main() { fragColor=vec4(v_color,1.0); }
         glBindVertexArray(0)
         self.cast_elapsed=10.0
         self.elapsed=0.0
+        self.light_level=1.0   # 0..1, definido pelo LightingSystem (luz ligada/apagada)
+        self._init_glow()
+
+    def _init_glow(self):
+        # Carrega os shaders externos
+        shader_dir = Path(__file__).resolve().parent / "shaders"
+
+        with open(shader_dir / "glow.vert", encoding="utf-8") as f:
+            glow_vs = f.read()
+
+        with open(shader_dir / "glow.frag", encoding="utf-8") as f:
+            glow_fs = f.read()
+
+        # Compila e vincula os shaders
+        self.glow_program = gls.compileProgram(
+            gls.compileShader(glow_vs, GL_VERTEX_SHADER),
+            gls.compileShader(glow_fs, GL_FRAGMENT_SHADER)
+        )
+
+        # Localização das uniforms
+        self.glow_center_loc = glGetUniformLocation(
+            self.glow_program, 'center'
+        )
+        self.glow_radius_loc = glGetUniformLocation(
+            self.glow_program, 'radius'
+        )
+        self.glow_color_loc = glGetUniformLocation(
+            self.glow_program, 'color'
+        )
+        self.glow_energy_loc = glGetUniformLocation(
+            self.glow_program, 'energy'
+        )
+
+        self.glow_vao = glGenVertexArrays(1)
+
+
+    def _offset(self):
+        """Deslocamento NDC da varinha (balanço + recuo ao lançar feitiço)."""
+        cast=max(0.,1.-self.cast_elapsed/.35)
+        recoil=math.sin(cast*math.pi)
+        bob=math.sin(self.elapsed*1.8)*.003
+        return -.055*recoil, .055*recoil+bob
+
+    def tip_ndc(self):
+        """Posição atual da ponta (cristal) em NDC, já com o deslocamento."""
+        ox,oy=self._offset()
+        return TIP_NDC[0]+ox, TIP_NDC[1]+oy
+
+    def glow_energy(self):
+        """Intensidade do brilho: pulso suave + clarão ao lançar feitiço."""
+        return self.light_energy(1.2)
+
+    def light_energy(self, cast_boost):
+        """Como glow_energy, com força própria para o clarão do feitiço."""
+        cast=max(0.,1.-self.cast_elapsed/.35)
+        pulse=.85+.15*math.sin(self.elapsed*3.1)+.06*math.sin(self.elapsed*7.3)
+        return pulse+cast_boost*cast
+
+    def _draw_glow(self):
+        if self.light_level<.01:
+            return
+        viewport=glGetIntegerv(GL_VIEWPORT)
+        w,h=float(viewport[2]),float(viewport[3])
+        aspect=w/h if h>0 else 1.0
+        tx,ty=self.tip_ndc()
+        energy=self.glow_energy()*self.light_level
+        radius=GLOW_RADIUS*(.85+.15*min(energy,2.0))
+        glUseProgram(self.glow_program)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_ONE,GL_ONE)
+        glUniform2f(self.glow_center_loc,tx,ty)
+        # NDC não considera a proporção da janela: corrige para o halo ficar redondo.
+        glUniform2f(self.glow_radius_loc,radius/aspect,radius)
+        glUniform3f(self.glow_color_loc,*GLOW_COLOR)
+        glUniform1f(self.glow_energy_loc,energy)
+        glBindVertexArray(self.glow_vao)
+        glDrawArrays(GL_TRIANGLE_STRIP,0,4)
+        glBindVertexArray(0)
+        glDisable(GL_BLEND)
 
     def cast(self):
         self.cast_elapsed=0.0
@@ -128,13 +225,12 @@ void main() { fragColor=vec4(v_color,1.0); }
         if was_cull: glDisable(GL_CULL_FACE)
         glDepthMask(GL_FALSE)
         glUseProgram(self.program)
-        cast=max(0.,1.-self.cast_elapsed/.35)
-        recoil=math.sin(cast*math.pi)
-        bob=math.sin(self.elapsed*1.8)*.003
-        glUniform2f(self.offset_loc,-.055*recoil,.055*recoil+bob)
+        ox,oy=self._offset()
+        glUniform2f(self.offset_loc,ox,oy)
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES,0,self.vertex_count)
         glBindVertexArray(0)
+        self._draw_glow()   # brilho na ponta, por cima da varinha
         glUseProgram(0)
         glDepthMask(GL_TRUE if was_mask else GL_FALSE)
         if was_depth: glEnable(GL_DEPTH_TEST)
@@ -145,3 +241,5 @@ void main() { fragColor=vec4(v_color,1.0); }
         glDeleteBuffers(1,[self.vbo])
         glDeleteVertexArrays(1,[self.vao])
         glDeleteProgram(self.program)
+        glDeleteVertexArrays(1,[self.glow_vao])
+        glDeleteProgram(self.glow_program)

@@ -143,10 +143,14 @@ def build_scene(here):
         collision=True
     )
 
+    # O tampo do side_table fica em y = 0.665 (local) * 0.78 (escala) = 0.519.
+    # A base das velas precisa estar exatamente nessa altura, senao flutuam.
+    # Escala 0.52: a placa das velas (1.0 * escala) cabe nos 0.53 de largura
+    # do tampo (0.68 * 0.78), sem sobrar para fora da borda.
     add_model(
         models, here, "candle_set.obj",
-        3.55, 0.60, 0.45,
-        sx=0.65, sy=0.65, sz=0.65
+        3.55, 0.519, 0.45,
+        sx=0.52, sy=0.52, sz=0.52
     )
 
     add_model(
