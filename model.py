@@ -1,16 +1,21 @@
 
 import ctypes
 import glm
+from PIL import Image
 from OpenGL.GL import *
 from model_loader import load_obj
 
 
 class Model:
 
-    def __init__(self, path):
+    def __init__(self, path, texture_path=None, texture_materials=None):
 
         # Carregando o arquivo OBJ
-        vertices, faces, render_vertices = load_obj(path)
+        vertices, faces, render_vertices = load_obj(
+            path,
+            textured=texture_path is not None,
+            texture_materials=texture_materials
+        )
 
         # Guarda os vértices originais para calcular colisões
         self.vertices = [
@@ -26,6 +31,37 @@ class Model:
         self.rotation = glm.vec3(0.0, 0.0, 0.0)
 
         self.scale = glm.vec3(1.0, 1.0, 1.0)
+
+        self.textureId = None
+        if texture_path is not None:
+            with Image.open(texture_path) as image:
+                image = image.convert("RGB").transpose(
+                    Image.Transpose.FLIP_TOP_BOTTOM
+                )
+                width, height = image.size
+                image_data = image.tobytes()
+
+            self.textureId = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D, self.textureId)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+            unpack_alignment = glGetIntegerv(GL_UNPACK_ALIGNMENT)
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+            glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                GL_RGB,
+                width,
+                height,
+                0,
+                GL_RGB,
+                GL_UNSIGNED_BYTE,
+                image_data
+            )
+            glPixelStorei(GL_UNPACK_ALIGNMENT, unpack_alignment)
+            glBindTexture(GL_TEXTURE_2D, 0)
 
         # Criando VAO
         self.vaoId = glGenVertexArrays(1)
@@ -50,7 +86,7 @@ class Model:
             3,
             GL_FLOAT,
             GL_FALSE,
-            6 * 4,
+            9 * 4,
             ctypes.c_void_p(0)
         )
 
@@ -61,9 +97,32 @@ class Model:
             3,
             GL_FLOAT,
             GL_FALSE,
-            6 * 4,
+            9 * 4,
             ctypes.c_void_p(3 * 4)
         )
+
+        # Coordenadas de textura ST
+        glEnableVertexAttribArray(2)
+        glVertexAttribPointer(
+            2,
+            2,
+            GL_FLOAT,
+            GL_FALSE,
+            9 * 4,
+            ctypes.c_void_p(6 * 4)
+        )
+
+        # Indica quais faces usam a textura
+        glEnableVertexAttribArray(3)
+        glVertexAttribPointer(
+            3,
+            1,
+            GL_FLOAT,
+            GL_FALSE,
+            9 * 4,
+            ctypes.c_void_p(8 * 4)
+        )
+
         # Desvinculando
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)
@@ -120,6 +179,8 @@ class Model:
     # Desenha o objeto
     def draw(self):
 
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, self.textureId or 0)
         glBindVertexArray(self.vaoId)
 
         glDrawArrays(
@@ -133,6 +194,8 @@ class Model:
     # Libera recursos
     def destroy(self):
 
+        if self.textureId is not None:
+            glDeleteTextures(1, [self.textureId])
         glDeleteBuffers(1, [self.vboId])
         glDeleteVertexArrays(1, [self.vaoId])
        
@@ -157,4 +220,3 @@ class Model:
             maxZ = max(maxZ, transformed.z)
 
         return minX, maxX, minZ, maxZ
-

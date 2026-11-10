@@ -3,3 +3,4 @@ PyOpenGL
 PyOpenGL-accelerate
 numpy
 PyGLM
+Pillow
