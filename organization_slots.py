@@ -7,23 +7,28 @@ sobreposicao causada por origens distintas. Sem fisica externa.
 # Cada lista representa pontos de apoio distintos; nenhum ponto e repetido.
 # (x, altura do apoio, z, rotacao em Y)
 SLOTS = {
+    # Estante: face superior da primeira prateleira em Y = 0.845.
     "livro": [
-        (-0.06, 0.69, -3.31, 90.0),
-        (0.52, 0.69, -3.31, 90.0),
-        (1.10, 0.69, -3.31, 90.0),
+        (-0.06, 0.855, -3.20, 90.0),
+        (0.52, 0.855, -3.20, 90.0),
+        (1.10, 0.855, -3.20, 90.0),
     ],
+    # Bancada girada 90 graus: tampo em Y = 0.895 * 0.8 = 0.716.
     "pocao": [
-        (-3.08, 0.83, -0.08, 0.0),
-        (-3.58, 0.83,  0.27, 0.0),
-        (-3.58, 0.83,  0.62, 0.0),
+        (-2.96, 0.726, -0.39, 0.0),
+        (-2.96, 0.726,  0.23, 0.0),
+        (-2.96, 0.726,  0.86, 0.0),
     ],
+    # Escrivaninha: tampo em Y = 0.825 * 0.82 = 0.6765.
     "pergaminho": [
-        (-2.63, 0.86, -2.72, 0.0),
-        (-2.08, 0.86, -2.72, 0.0),
+        (-2.66, 0.686, -2.70, 0.0),
+        (-2.03, 0.686, -2.70, 0.0),
     ],
     "cristal": [
-        (1.82, 0.20, 2.51, 0.0),
-        (2.03, 0.20, 2.56, 0.0),
+        # No topo do cesto (superficie em y ~= 0.302): os dois cristais
+        # ficam separados e acima da superficie solida, sem sumir dentro dele.
+        (0.02, 0.315, 1.33, 0.0),
+        (0.28, 0.315, 1.37, 0.0),
     ],
 }
 
