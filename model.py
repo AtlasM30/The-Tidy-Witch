@@ -1,16 +1,21 @@
 
 import ctypes
 import glm
+from PIL import Image
 from OpenGL.GL import *
 from model_loader import load_obj, find_emissive_anchors
 
 
 class Model:
 
-    def __init__(self, path):
+    def __init__(self, path, texture_path=None, texture_materials=None):
 
         # Carregando o arquivo OBJ
-        vertices, faces, render_vertices = load_obj(path)
+        vertices, faces, render_vertices = load_obj(
+            path,
+            textured=texture_path is not None,
+            texture_materials=texture_materials
+        )
 
         # Guarda os vértices originais para calcular colisões
         self.vertices = [
@@ -34,6 +39,37 @@ class Model:
 
         self.scale = glm.vec3(1.0, 1.0, 1.0)
 
+        self.textureId = None
+        if texture_path is not None:
+            with Image.open(texture_path) as image:
+                image = image.convert("RGB").transpose(
+                    Image.Transpose.FLIP_TOP_BOTTOM
+                )
+                width, height = image.size
+                image_data = image.tobytes()
+
+            self.textureId = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D, self.textureId)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+            unpack_alignment = glGetIntegerv(GL_UNPACK_ALIGNMENT)
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+            glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                GL_RGB,
+                width,
+                height,
+                0,
+                GL_RGB,
+                GL_UNSIGNED_BYTE,
+                image_data
+            )
+            glPixelStorei(GL_UNPACK_ALIGNMENT, unpack_alignment)
+            glBindTexture(GL_TEXTURE_2D, 0)
+
         # Criando VAO
         self.vaoId = glGenVertexArrays(1)
         glBindVertexArray(self.vaoId)
@@ -50,8 +86,10 @@ class Model:
             GL_STATIC_DRAW
         )
 
-        # Cada vértice tem 12 floats (ver model_loader.load_obj)
-        stride = 12 * 4
+        # Cada vértice tem 15 floats:
+        # posição (3), cor (3), normal (3), material (3)
+        # O layout deve corresponder ao model_loader.load_obj.
+        stride = 15 * 4
 
         # Posição: X, Y, Z
         glEnableVertexAttribArray(0)
@@ -65,7 +103,7 @@ class Model:
             1, 3, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(3 * 4)
         )
 
-        # Normal da face: X, Y, Z (usada no modelo de Phong)
+        # Normal da face: X, Y, Z (Phong)
         glEnableVertexAttribArray(2)
         glVertexAttribPointer(
             2, 3, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(6 * 4)
@@ -76,6 +114,19 @@ class Model:
         glVertexAttribPointer(
             3, 3, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(9 * 4)
         )
+        
+        # Coordenadas de textura ST
+        glEnableVertexAttribArray(4)
+        glVertexAttribPointer(
+            4, 2, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(12 * 4)
+        )
+
+        # Indicador de uso de textura
+        glEnableVertexAttribArray(5)
+        glVertexAttribPointer(
+            5, 1, GL_FLOAT, GL_FALSE, stride, ctypes.c_void_p(14 * 4)
+        )
+
         # Desvinculando
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)
@@ -132,6 +183,8 @@ class Model:
     # Desenha o objeto
     def draw(self):
 
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, self.textureId or 0)
         glBindVertexArray(self.vaoId)
 
         glDrawArrays(
@@ -145,6 +198,8 @@ class Model:
     # Libera recursos
     def destroy(self):
 
+        if self.textureId is not None:
+            glDeleteTextures(1, [self.textureId])
         glDeleteBuffers(1, [self.vboId])
         glDeleteVertexArrays(1, [self.vaoId])
        
@@ -169,4 +224,3 @@ class Model:
             maxZ = max(maxZ, transformed.z)
 
         return minX, maxX, minZ, maxZ
-

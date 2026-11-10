@@ -7,11 +7,16 @@ def add_model(models, here, filename,
               rx=0.0, ry=0.0, rz=0.0,
               sx=1.0, sy=1.0, sz=1.0,
               collision=False, item_type=None, destination_type=None,
-              display_name=None, slot_position=None, slot_rotation=(0.0, 0.0, 0.0)):
+              display_name=None, slot_position=None, slot_rotation=(0.0, 0.0, 0.0),
+              texture_path=None, texture_materials=None):
 
     path = os.path.join(here, "models", filename)
 
-    obj = Model(path)
+    obj = Model(
+        path,
+        texture_path=texture_path,
+        texture_materials=texture_materials
+    )
 
     obj.setPosition(x, y, z)
     obj.setRotation(rx, ry, rz)
@@ -40,13 +45,27 @@ def build_scene(here):
 
     add_model(
         models, here, "room_shell.obj",
-        0.0, 0.0, 0.0
+        0.0, 0.0, 0.0,
+        texture_path=os.path.join(here, "models", "purple_stone_wall.png"),
+        texture_materials={"wall"}
+    )
+
+    add_model(
+        models, here, "floor.obj",
+        0.0, 0.0, 0.0,
+        texture_path=os.path.join(
+            here,
+            "models",
+            "floor_texture_dark.png"
+        )
     )
 
     # FECHA A PAREDE ABERTA DO QUARTO
     add_model(
         models, here, "wall_patch.obj",
-        0.0, 0.0, 3.90
+        0.0, 0.0, 3.90,
+        texture_path=os.path.join(here, "models", "purple_stone_wall.png"),
+        texture_materials={"wall"}
     )
 
     add_model(
@@ -133,7 +152,9 @@ def build_scene(here):
     add_model(
         models, here, "bed.obj",
         2.75, 0.0, -1.60,
-        collision=True
+        collision=True,
+        texture_path=os.path.join(here, "models", "witch_comforter.png"),
+        texture_materials={"blanket"}
     )
 
     add_model(
