@@ -164,10 +164,14 @@ def build_scene(here):
         collision=True
     )
 
+    # O tampo do side_table fica em y = 0.665 (local) * 0.78 (escala) = 0.519.
+    # A base das velas precisa estar exatamente nessa altura, senao flutuam.
+    # Escala 0.52: a placa das velas (1.0 * escala) cabe nos 0.53 de largura
+    # do tampo (0.68 * 0.78), sem sobrar para fora da borda.
     add_model(
         models, here, "candle_set.obj",
-        3.55, 0.60, 0.45,
-        sx=0.65, sy=0.65, sz=0.65
+        3.55, 0.519, 0.45,
+        sx=0.52, sy=0.52, sz=0.52
     )
 
     add_model(
@@ -197,12 +201,6 @@ def build_scene(here):
         -4.50, 0.32, 0.62,
         ry=90.0,
         sx=0.82, sy=0.82, sz=0.82
-    )
-
-    add_model(
-        models, here, "bottle_set.obj",
-        -3.11, 0.78, 0.24,
-        sx=0.75, sy=0.75, sz=0.75
     )
 
     add_model(
@@ -258,12 +256,17 @@ def build_scene(here):
             piece.broom_variant = variant
             piece.custom_visible = (variant == 'basic')
 
+    # Recipiente dos cristais (as piramides azuis).
+    # ANTES: junto da bancada de personalizacao, onde era dificil selecionar.
+    # AGORA: no corredor central, afastado dos moveis e da cama.
+    # O cesto possui superficie superior em y=0.42 no OBJ, que com
+    # escala 0.72 equivale a y=0.3024 no mundo.
     add_model(
         models, here, "basket.obj",
-        1.95, 0.0, 2.56,
+        0.15, 0.0, 1.35,
         sx=0.72, sy=0.72, sz=0.72,
-        destination_type="cristal", display_name="Cesto de cristais",
-        slot_position=(1.95, 0.14, 2.56),
+        destination_type="cristal", display_name="Cesto para piramides azuis",
+        slot_position=(0.15, 0.31, 1.35),
     )
 
     # =========================================
@@ -272,28 +275,30 @@ def build_scene(here):
     # Cada mancha e uma instancia independente. O volume comeca logo
     # acima do piso (y=0), e afunda por transformacoes GLM ao ser limpo.
     # Distribuicao em areas livres para nao esconder manchas sob moveis.
+    # (x, z, escala_x, escala_z) — 19 manchas com itens associados por indice.
+    # Cama: X 1.71..3.79, Z -2.99..-0.22 (limites aproximados).
+    # Concentramos a sujeira do lado oposto; todas as manchas ficam em X <= 0.85.
+    # Evitar mover sem verificar o espaco livre nos arredores dos moveis.
     dirt_locations = [
-        (-0.80,  2.45, 0.68, 0.73),
-        ( 0.40,  1.65, 0.77, 0.65),
-        ( 2.48,  1.30, 0.75, 0.76),
-        ( 1.65,  0.10, 0.65, 0.70),
-        (-1.05, -1.05, 0.78, 0.67),
-        ( 0.70, -2.05, 0.69, 0.81),
-        ( 3.35, -0.35, 0.58, 0.62),
-        # Seis novos esconderijos para ampliar as opcoes de personalizacao.
-        (-2.00,  2.55, 0.56, 0.60),
-        ( 0.10,  2.75, 0.50, 0.58),
-        ( 2.90,  2.55, 0.48, 0.52),
-        (-1.75,  0.55, 0.52, 0.53),
-        ( 1.05, -1.35, 0.53, 0.50),
-        ( 3.12, -2.50, 0.48, 0.50),
-        # Novas manchas: 6 novos objetos organizaveis.
-        (-3.15, -1.38, 0.52, 0.50),
-        (-0.15,  0.65, 0.49, 0.53),
-        ( 2.30, -2.55, 0.50, 0.50),
-        (-2.80, -0.95, 0.44, 0.48),
-        ( 1.65, -2.78, 0.46, 0.50),
-        (-0.85, -2.75, 0.48, 0.48),
+        (-3.86, -2.63, 0.46, 0.48),  # Ponto 01
+        (-1.25, -2.65, 0.50, 0.48),  # Ponto 02
+        ( 0.83, -2.57, 0.44, 0.48),  # Ponto 03
+        (-3.87, -1.83, 0.47, 0.48),  # Ponto 04
+        ( 0.82, -1.99, 0.45, 0.45),  # Ponto 05
+        (-3.94, -1.02, 0.45, 0.48),  # Ponto 06
+        (-2.38, -1.04, 0.47, 0.46),  # Ponto 07
+        (-1.47, -1.06, 0.43, 0.45),  # Ponto 08
+        (-3.94, -0.12, 0.44, 0.46),  # Ponto 09
+        (-1.90, -0.13, 0.48, 0.46),  # Ponto 10
+        (-3.96,  0.94, 0.44, 0.47),  # Ponto 11
+        (-1.80,  0.93, 0.48, 0.44),  # Ponto 12
+        (-2.10,  1.79, 0.48, 0.47),  # Ponto 13
+        (-0.60,  1.78, 0.47, 0.48),  # Ponto 14
+        (-3.72,  2.70, 0.48, 0.48),  # Ponto 15
+        (-2.41,  2.72, 0.48, 0.49),  # Ponto 16
+        (-1.10,  2.73, 0.47, 0.46),  # Ponto 17
+        (-2.65,  3.45, 0.45, 0.45),  # Ponto 18
+        (-0.60,  3.41, 0.46, 0.43),  # Ponto 19
     ]
     dirt_patches = []
     for index, (x, z, sx, sz) in enumerate(dirt_locations, start=1):
